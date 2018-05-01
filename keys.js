@@ -7,12 +7,7 @@ exports.twitter = {
   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 };
 
-var omdbKeys = {
-  apiKey: '77cfffe0'
-}
-
 exports.spotify = {
   id: process.env.SPOTIFY_ID,
-  secret: process.env.SPOTIFY_SECRET,
-  omdbKeys: omdbKeys
+  secret: process.env.SPOTIFY_SECRET
 };

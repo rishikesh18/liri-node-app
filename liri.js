@@ -1,132 +1,93 @@
 require("dotenv").config();
-var request = require("request");
-//var Twitter = require("twitter");
-//var Spotify=require("spotify");
-
-var keys = require("./key");
-
-//var spotify = new Spotify(keys.spotify);
-//var client = new Twitter(keys.twitter);
-//console.log(client);
-// Load the fs package to read and write
-var fs = require("fs");
-// Take two arguments.
-// The first will be the action (i.e. "deposit", "withdraw", etc.)
-// The second will be the amount that will be added, withdrawn, etc.
-var action = process.argv[2];
-var value = process.argv[3];
-
-for (var i = 4; i < process.argv.length; i++) {
-  value = value + "+"+ process.argv[i];
-}
-console.log(value);
-// We will then create a switch-case statement (if-else would also work).
-// The switch-case will direct which function gets run.
-switch (action) {
-case "my-tweets":
-myTweets();
-  break;
-case "spotify-this-song":
-spotifySong();
-  break;
-case "movie-this":
-movieThis();
-  break;
-case "do-what-it-says":
-doWhat();
-  break;
-}
+var fs = require('fs');
 var Twitter = require('twitter');
-function myTweets() {
-	// Load twitter module from npm
-	
+var Spotify = require('node-spotify-api');
+var request = require("request");
+var keys = require("./keys.js");
+var spotify = new Spotify(keys.spotify);
+var client = new Twitter(keys.twitter);
 
-	// From exports of keys.js file
-	// var client = new Twitter({
-	// 	consumer_key: twitterCredentials.consumer_key,
-	// 	consumer_secret: twitterCredentials.consumer_secret,
-	// 	access_token_key: twitterCredentials.access_token_key,
-	// 	access_token_secret: twitterCredentials.access_token_secret
-	// });
-
-	// Twitter API parameters
-	var params = {
-		screen_name: 'rishikesh_n18',
-		count: 10
-	};
-
-	// GET request for last 20 tweets on my account's timeline
-	twitClient.get('statuses/user_timeline', params).then(function(tweets) {
-		console.log('\n');
-		for(var i = 0; i < (tweets.length < 20 ? tweets.length : 20); i++) {
-				var date = new Date(tweets[i].created_at);
-				console.log(
-						'\nUser: ' + params.screen_name
-						+ '\"\nDate: ' + Moment(date).format('LLL')
-						+ '\nTweet: \"' + tweets[i].text 
-						+ '\"\n'
-				);
-		}
-		console.log('\n');
-})
-.catch(function(err){
-		console.log(err);
-});
+var value = "";
+var action = process.argv[2];
+for (var i = 3; i < process.argv.length; i++) {
+    value = value + " " + process.argv[i];
 };
 
-function spotifySong() {
-  spotify.search({ type: 'track', query: songName })
-    .then(function(response) {
-        var items = response.tracks.items;
-        for(var i = 0; i < items.length; i++) {
-            console.log(
-                // '\nArtist: ' + items[0].artists[0].name
-                // + '\nSong Name: ' + items[0].name
-                // + '\nPreview URL: ' + items[0].preview_url
-                // + '\nAlbum: ' + items[0].album.name
-                '\nArtist: ' + items[i].artists[0].name
-                + '\nSong Name: ' + items[i].name
-                + '\nPreview URL: ' + items[i].preview_url
-                + '\nAlbum: ' + items[i].album.name
-            );
+switch (action) {
+    case "my-tweets":
+    myTweets();
+      break;
+    case "spotify-this-song":
+    spotifySong();
+      break;
+    case "movie-this":
+    movieThis();
+      break;
+    case "do-what-it-says":
+    doWhat();
+      break;
+    }
+function spotifySong(){
+    spotify.search({ type: 'track', query: value, limit: 2 }, function (error, data) {
+        if (error) {
+            return console.log('Error: ' + error);
         }
-        console.log('\n');
-    })
-    .catch(function(err) {
-        searchSong('The Sign');
+        var song = data.tracks.items[0];
+        for (var k = 0; k < song.artists.length; k++) {
+            console.log("Artist: " + song.artists[k].name)
+        }
+        console.log("Track: " + song.name);
+        console.log("Album: " + song.album.name);
+        console.log("Preview Link: " + song.external_urls.spotify);
     });
-};
-
-var Imdb = require('imdb-api');
-
-function movieThis (){
-	Imdb.get((name + '').replace(/,/g, ' '), {apiKey: Keys.omdbKeys['apiKey'], timeout: 30000})
-	.then(function(movie) {
-			console.log(
-					'\nTitle: ' + movie.title
-					+ '\nDate: '+ movie.year
-					+ '\n' + movie.ratings[0].Source 
-					+ ': '+ movie.ratings[0].Value
-					+ '\n'+ movie.ratings[1].Source
-					+ ': '+ movie.ratings[1].Value
-					+ '\nCountry: ' + movie.country
-					+ '\nLanugages: ' + movie.languages
-					+ '\nPlot: ' + movie.plot+ '\n'
-			);
-	})
-	.catch(function(err){
-			imdbInfo('Mr. Nobody.');
-	});
 }
-
+function myTweets(){
+    client.get('statuses/user_timeline', 'rishikesh_n18', function (error, twitters, response) {
+        if (error) {
+            return console.log("Error: " + error)
+        }
+        else {
+            console.log("Tweets: \n");
+            for (var j = 0; j < 10; j++){
+                var tweet = twitters[j];
+                console.log(tweet.text);
+                console.log(tweet.created_at);
+                
+               // console.log(tweet.created_at + "\n");
+               //console.log(response);
+            };
+        }
+    });
+}
+function movieThis() {
+    request("http://www.omdbapi.com/?t=" + value + "&y=&plot=short&apikey=trilogy", function (error, response, body) {
+        if (error) {
+            return console.log("Error: " + error)
+        }
+        else if (response.statusCode === 200) {
+            var movieInfo = JSON.parse(body);
+            console.log("Title: " + movieInfo.Title)
+            console.log("Year: " + movieInfo.Year)
+            console.log("IMDB Rating: " + movieInfo.imdbRating)
+            if (movieInfo.Ratings[1]) {
+            console.log("Tomatometer: " + movieInfo.Ratings[1].Value)
+            }
+            else if (!movieInfo.Ratings[1]){console.log("Tomatometer: No Rating Available")}
+            console.log("Country: " + movieInfo.Country);
+            console.log("Language(s): " + movieInfo.Language);
+            console.log("Plot: " + movieInfo.Plot);
+            console.log("Actors: " + movieInfo.Actors)
+        }
+    })
+}
 function doWhat() {
-	return new Promise(function(resolve, reject) {
-		fs.readFile('random.txt', 'utf8', function(error, data) {
-				if (error) {
-						console.log(error);
-						reject(error);
-				}
-				resolve(data.split(','));
-		});
-});
+    fs.readFile('random.txt', 'utf8', function (error, data) {
+        if (error) {
+            return console.log("Error: " + error);
+        }
+        var arr = data.split(",");
+        value = arr[0];
+        action = arr[1];
+        
+    });
 }
