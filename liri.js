@@ -1,3 +1,4 @@
+//linking differnt npm and other files
 require("dotenv").config();
 var fs = require('fs');
 var Twitter = require('twitter');
@@ -7,26 +8,53 @@ var keys = require("./keys.js");
 var spotify = new Spotify(keys.spotify);
 var client = new Twitter(keys.twitter);
 
-var value = "";
+//grabing user command
 var action = process.argv[2];
+
+//grabing user input
+var value = "";
 for (var i = 3; i < process.argv.length; i++) {
     value = value + " " + process.argv[i];
 };
 
-switch (action) {
-    case "my-tweets":
-    myTweets();
-      break;
-    case "spotify-this-song":
-    spotifySong();
-      break;
-    case "movie-this":
-    movieThis();
-      break;
-    case "do-what-it-says":
-    doWhat();
-      break;
-    }
+//switch case of the user command line (user inputs)
+function runSwitch(action) {
+    switch (action) {
+        case "my-tweets":
+        myTweets();
+        break;
+        case "spotify-this-song":
+        spotifySong();
+        break;
+        case "movie-this":
+        movieThis();
+        break;
+        case "do-what-it-says":
+        doWhat();
+        break;
+        }
+};
+
+//commands to get latest 20 tweets
+function myTweets(){
+    client.get('statuses/user_timeline', 'rishikesh_n18', function (error, twitters, response) {
+        if (error) {
+            return console.log("Error: " + error)
+        }
+        else {
+            console.log("Tweets: \n");
+            for (var j = 0; j < 20; j++){
+                var tweet = twitters[j];
+                console.log(tweet.text+ ", Created at: "+ tweet.created_at);
+                //console.log(tweet.created_at);
+                
+               // console.log(tweet.created_at + "\n");
+               //console.log(response);
+            };
+        }
+    });
+}
+//Commands to get song details
 function spotifySong(){
     spotify.search({ type: 'track', query: value, limit: 2 }, function (error, data) {
         if (error) {
@@ -41,24 +69,7 @@ function spotifySong(){
         console.log("Preview Link: " + song.external_urls.spotify);
     });
 }
-function myTweets(){
-    client.get('statuses/user_timeline', 'rishikesh_n18', function (error, twitters, response) {
-        if (error) {
-            return console.log("Error: " + error)
-        }
-        else {
-            console.log("Tweets: \n");
-            for (var j = 0; j < 10; j++){
-                var tweet = twitters[j];
-                console.log(tweet.text);
-                console.log(tweet.created_at);
-                
-               // console.log(tweet.created_at + "\n");
-               //console.log(response);
-            };
-        }
-    });
-}
+//command to get movie informations
 function movieThis() {
     request("http://www.omdbapi.com/?t=" + value + "&y=&plot=short&apikey=trilogy", function (error, response, body) {
         if (error) {
@@ -80,14 +91,22 @@ function movieThis() {
         }
     })
 }
+//command to do from the ramdom.txt file
 function doWhat() {
+        value="";
+        action= "";
     fs.readFile('random.txt', 'utf8', function (error, data) {
         if (error) {
             return console.log("Error: " + error);
-        }
+        }else {
         var arr = data.split(",");
-        value = arr[0];
-        action = arr[1];
-        
+        action = arr[0];
+        value = arr[1];
+        console.log(value);
+        console.log(action);
+        runSwitch(action);
+        }
     });
 }
+
+runSwitch(action);
